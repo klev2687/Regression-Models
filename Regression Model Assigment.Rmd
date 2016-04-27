@@ -1,0 +1,95 @@
+---
+title: "Relationship MPG and Other Variables for mtcars"
+author: "Klevin D."
+date: "April 27, 2016"
+output:
+    html_document:
+        fig_caption: true
+---
+##Executive Summary
+Motor Trend, a magazine about the automobile industry is interested in looking at a data set of a collection of cars. In this project, we will explore the relationship between a set of variables and miles per gallon (MPG) (outcome). The following two questions are for particular interest:
+
+1. “Is an automatic or manual transmission better for MPG”
+2. "Quantify the MPG difference between automatic and manual transmissions"
+
+Using linear regression, we determine that the MPG for Manual transmissions is higher than that of Automatic transmission. Considering influenctial variables Manual transmission is better for MPG by a factor of 1.8 compared to Automatic transmission.
+
+##Data Processing
+We first load and review the dataset and perform necessary variables to factors
+```{r, echo=FALSE}
+data(mtcars)
+head(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am <- factor(mtcars$am, labels = c("Auto", "Manual"))
+```
+
+##Exploratory Analysis
+In this analysis, we check effects of transmission type on MPG. We plot a boxplot of variables mpg against 
+am(Figure 1). We see from the plot that, Manual transmission vehicles have a higher MPG.
+
+##Hypothesis Testing
+We can confirm the above exploratory analysis by a T-test.
+```{r}
+with(mtcars, t.test(mpg[am=="Auto"], mpg[am=="Manual"]))
+```
+T-test with p-value=0.001374 confirms that the means are significantly different.
+
+##Regression Analysis
+We first build a simple regression model.
+```{r}
+fit1 <- lm(mpg~am, data = mtcars)
+summary(fit1)
+```
+Automatic transmission has lower mean than Manual transmission which agrees with the exploratory boxplot and t-test. However, the Multiple R-squared value is `r round(summary(fit1)$r.squared,4)`. This explains that the model only accounts for `r round(summary(fit1)$r.squared,4)*100`% of the variance.
+
+We will now build a regression model including variables that also have an influence on mpg. 
+```{r, }
+data("mtcars")
+sort(cor(mtcars)["mpg",])
+```
+We notice that disp and cyl are closely correlate and thus choose to ignore disp.
+
+```{r, echo=FALSE, results='hide'}
+data(mtcars)
+head(mtcars)
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am <- factor(mtcars$am, labels = c("Auto", "Manual"))
+```
+
+We will model our regression using variable wt, am, cyl and hp.
+```{r}
+model <- lm(mpg~am+wt+hp+cyl, mtcars)
+summary(model)
+```
+After including the additional variables, we can see that the new model accounts for `r round(summary(model)$r.squared,4)*100`% of the variance.
+
+We can confirm that the models are significantly different by an ANOVA check.
+```{r}
+anova(fit1, model)
+```
+With a p-value of 1.688e-08, confirm that the new model is significantly different from our simple model.
+
+##Residual plot and Diagnostics
+In this section, we analyze the residual plots of our final regression model. Referring to Figure 2, 
+we conclude that the residuals are normally distributed.
+
+##Conclusion
+With the above analysis, we conclude that, on an average, Manual Transmission cars have higher MPGs than Automatic transmission cars by a factor of 1.089. 
+
+
+##Appendix
+```{r, fig.cap="Figure 1",echo=FALSE}
+boxplot(mpg~am, data=mtcars, xlab="Transmission", ylab="MPG", main="Transmission vs. MPG")
+```
+
+
+```{r, fig.cap='Figure 2', echo=FALSE}
+par(mfrow=c(2,2))
+plot(model)
+```
